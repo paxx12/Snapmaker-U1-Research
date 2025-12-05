@@ -9,13 +9,19 @@ The goal is to understand the hardware architecture, pin assignments, and system
 ### Hardware Documentation
 
 - [**Printer Pin Documentation**](docs/PRINTER_PIN_DOCUMENTATION.md) - Comprehensive documentation of all pins, MCUs, their functions and behaviors across the 6-microcontroller system
-
   - Main MCU (motion control, bed, chamber)
   - Host MCU (Linux GPIO, NFC/RFID readers)
   - 4× Extruder MCUs (independent hotend control)
   - Communication protocols
   - Behavioral characteristics
   - Firmware configuration
+
+- [**RFID Filament Tag Protocol**](docs/RFID.md) - Complete specification of Snapmaker's proprietary RFID tag format
+
+  - MIFARE Classic 1K (M1) card structure
+  - Memory layout and data fields
+  - Material types and properties
+  - RSA-2048 signature verification
 
 ## Related Projects
 
