@@ -21,12 +21,15 @@ This document describes all pins, their functions, behaviors, and MCU architectu
 ## System Architecture
 
 The printer consists of **6 microcontrollers**:
+
 - **1 Main MCU** (`mcu`): Controls motion system (XYZ), heated bed, chamber management
 - **1 Host MCU** (`host`): Linux SBC GPIO for system control, NFC readers
 - **4 Extruder MCUs** (`e0`, `e1`, `e2`, `e3`): Independent hotend control units
 
 **Kinematics**: CoreXY
+
 **Build Volume**: 271mm (X) × 335mm (Y) × 275mm (Z)
+
 **Communication**: Serial UART/USB at 460800 baud (main), virtual serial for host
 
 ---
@@ -47,6 +50,7 @@ The printer consists of **6 microcontrollers**:
 ## Main MCU (mcu)
 
 **Connection**: `/dev/ttyS6` @ 460800 baud
+
 **Restart Method**: Command-based
 
 ### Motion System Pins
@@ -62,9 +66,13 @@ The printer consists of **6 microcontrollers**:
 | PB12 | X TMC2240 CS | SPI CS | Chip select for TMC2240 driver |
 
 **Driver**: TMC2240 (SPI2 bus)
+
 **Run Current**: 1.2A
+
 **Sensorless Homing**: SGT=1, uses virtual_endstop via TMC2240 stallGuard
+
 **Microsteps**: 64
+
 **Rotation Distance**: 40mm
 
 #### Y-Axis (CoreXY)
@@ -78,9 +86,13 @@ The printer consists of **6 microcontrollers**:
 | PE12 | Y TMC2240 CS | SPI CS | Chip select for TMC2240 driver |
 
 **Driver**: TMC2240 (SPI4 bus)
+
 **Run Current**: 1.2A
+
 **Sensorless Homing**: SGT=1, uses virtual_endstop
+
 **Microsteps**: 64
+
 **Rotation Distance**: 40mm
 
 #### Z-Axis
@@ -94,10 +106,15 @@ The printer consists of **6 microcontrollers**:
 | PB4 | Z TMC2209 UART | UART | Single-wire UART |
 
 **Driver**: TMC2209 (UART, address 0)
+
 **Run Current**: 0.7A
+
 **Sensorless Homing**: SGTHRS=110, uses virtual_endstop
+
 **Microsteps**: 16
+
 **Rotation Distance**: 8mm with 3:1 gear ratio
+
 **Travel**: -6mm to 275mm (allows below-bed probing)
 
 ### Heated Bed
@@ -108,9 +125,12 @@ The printer consists of **6 microcontrollers**:
 | PC2 | Bed Thermistor | Analog In | NTC 100K 3950 temperature sensor |
 
 **Control**: Dual PID system
+
 - Primary PID: Kp=16.154, Ki=0.075, Kd=105.0 (for high temps)
 - Secondary PID: Kp=51.172, Ki=0.625, Kd=95.0 (for low temps)
+
 **PWM Cycle**: 1 second
+
 **Temperature Range**: 0-100°C
 
 ### Chamber Environment
@@ -123,6 +143,7 @@ The printer consists of **6 microcontrollers**:
 | PA10 | Cavity LED | PWM | Chamber lighting (white LED) |
 
 **Cavity Fan**: Variable speed with tachometer feedback
+
 **Temperature Range**: -273.15°C to 999°C (sensor capable)
 
 ### Air Purifier System
@@ -136,6 +157,7 @@ The printer consists of **6 microcontrollers**:
 | PA7 | Power Detection | Analog In | Purifier power status (threshold: 0.88V) |
 
 **Purifier**: Dual-fan system with power detection
+
 **Tachometer Poll Interval**: 0.5ms
 
 ### Power System Monitoring
@@ -146,6 +168,7 @@ The printer consists of **6 microcontrollers**:
 | PC1 | Current Sensor | Analog In | ADC current measurement (0.01Ω sense, 33.333× scale) |
 
 **Power Loss Detection**:
+
 - Trigger Time: 22ms
 - Debounce Threshold: 20 events
 - Duty Threshold: 0.5
@@ -158,7 +181,9 @@ The printer consists of **6 microcontrollers**:
 | PC9 | Power Fan | PWM | Driver cooling fan (inverted: `!`) |
 
 **Power Fan**: Temperature-controlled based on extruder temperatures
+
 **Speed Table**:
+
 - Temp > 260°C: 100% speed (3× boost)
 - Temp > 45°C: 60% speed
 - Shutdown speed: 0%
@@ -172,7 +197,7 @@ The printer consists of **6 microcontrollers**:
 | PC5 | E2 Park Detector | Analog In | Extruder 2 park position (0-470 range) |
 | PB1 | E3 Park Detector | Analog In | Extruder 3 park position (0-470 range) |
 
-**Function**: Detects when extruder toolheads are properly parked
+Detects when extruder toolheads are properly parked.
 
 ### Filament Feed System (Main Board)
 
@@ -195,7 +220,9 @@ The printer consists of **6 microcontrollers**:
 | PD15 | Motor Tachometer | Digital In | Motor speed monitoring (1 PPR) |
 
 **Left Module**: Feeds extruders 1 (e1) and 0 (e0)
+
 **Preload Length**: 950mm
+
 **Load Position**: X=150, Y=5
 
 #### Right Feed Module
@@ -217,7 +244,9 @@ The printer consists of **6 microcontrollers**:
 | PD14 | Motor Tachometer | Digital In | Motor speed monitoring (1 PPR) |
 
 **Right Module**: Feeds extruders 2 (e2) and 3 (e3)
+
 **Preload Length**: 950mm
+
 **Tachometer PPR**: 6 (wheel), 1 (motor)
 
 ---
@@ -225,6 +254,7 @@ The printer consists of **6 microcontrollers**:
 ## Host MCU (Linux SBC)
 
 **Connection**: Virtual serial `/tmp/klipper_host_mcu`
+
 **Platform**: RK3588-based SBC (Linux GPIO control)
 
 ### System Control
@@ -234,6 +264,7 @@ The printer consists of **6 microcontrollers**:
 | gpiochip0/gpio12 | Head Hub Reset | Digital Out | USB hub reset (GPIO0_B4), active low |
 
 **Head Hub Reset**: Controls power/reset to USB hub for extruder MCUs
+
 - Normal operation: HIGH (1)
 - Reset: LOW (0)
 - Shutdown value: HIGH (1)
@@ -250,6 +281,7 @@ The printer consists of **6 microcontrollers**:
 | gpiochip1/gpio24 | RF Channel 2 | Digital Out | Antenna channel select |
 
 **SoC Reader Channels**:
+
 - Channel 1: Extruder 3 (e3)
 - Channel 2: Extruder 2 (e2)
 
@@ -261,11 +293,12 @@ The printer consists of **6 microcontrollers**:
 | gpiochip1/gpio28 | Extra Reader Reset | Digital Out | Reader reset control |
 
 **Extra Reader Channels**:
+
 - Channel 1: Extruder 0 (e0)
 - Channel 2: Extruder 1 (e1)
 
 **NFC Protocol**: FM175xx chip (ISO14443A compatible)
-**Function**: Reads filament spool RFID tags
+
 **SPI Mode**: 0 (CPOL=0, CPHA=0)
 
 ---
@@ -277,25 +310,33 @@ All four extruder MCUs share identical pin configurations. Each is an independen
 ### Extruder 0 (e0)
 
 **Location**: X=35.0, Y=332.2 (left front position)
+
 **Serial**: `platform-xhci-hcd.0.auto-usb-0:1.3:1.0`
+
 **Grab Direction**: True (towards front)
 
 ### Extruder 1 (e1)
 
 **Location**: X=102.7, Y=332.2 (left rear position)
+
 **Serial**: `platform-xhci-hcd.0.auto-usb-0:1.4:1.0`
+
 **Grab Direction**: False (towards rear)
 
 ### Extruder 2 (e2)
 
 **Location**: X=170.2, Y=332.2 (right front position)
+
 **Serial**: `platform-xhci-hcd.0.auto-usb-0:1.2:1.0`
+
 **Grab Direction**: False (towards rear)
 
 ### Extruder 3 (e3)
 
 **Location**: X=237.7, Y=332.2 (right rear position)
+
 **Serial**: `platform-xhci-hcd.0.auto-usb-0:1.1:1.0`
+
 **Grab Direction**: False (towards rear)
 
 ### Common Extruder MCU Pin Configuration
@@ -310,12 +351,19 @@ All four extruder MCUs share identical pin configurations. Each is an independen
 | PA15 | TMC2209 UART | UART | Driver communication (address 3) |
 
 **Driver**: TMC2209 (UART)
+
 **Run Current**: 0.8A
+
 **Hold Current**: 0.2A
+
 **Sense Resistor**: 0.150Ω
+
 **Microsteps**: 16
+
 **Rotation Distance**: 4.95mm (Bondtech-style gears)
+
 **Hold Delay**: 0.32768s
+
 **Power Down Time**: ~3s
 
 #### Hotend Heating System
@@ -327,6 +375,7 @@ All four extruder MCUs share identical pin configurations. Each is an independen
 | PB7 | Heat Switch | Digital Out | Heater power enable (inverted: `!`) |
 
 **Temperature Control**:
+
 - PID: Kp=33.540, Ki=9.317, Kd=30.186
 - Range: 0-300°C
 - Min Extrude Temp: 170°C
@@ -343,6 +392,7 @@ All four extruder MCUs share identical pin configurations. Each is an independen
 | PB4 | Fan Tachometer | Digital In | Fan speed monitoring |
 
 **Fan Features** (e0 only):
+
 - Auxiliary cavity fan control (ID: 2)
 - Exhaust purifier control (ID: 3)
 - Shutdown speed: 0%
@@ -356,6 +406,7 @@ All four extruder MCUs share identical pin configurations. Each is an independen
 | PA10 | Nozzle Fan Tach | Digital In | Fan speed monitoring |
 
 **Hotend Fan**:
+
 - Temperature-controlled: ON at 45°C
 - Full speed: 100%
 - Probe speed: 50% (for leveling)
@@ -369,6 +420,7 @@ All four extruder MCUs share identical pin configurations. Each is an independen
 | PA0 | Inductance Coil | Analog/PWM | Capacitive frequency sensor |
 
 **Probe Characteristics**:
+
 - Type: LC oscillator frequency measurement
 - Z-Offset: -0.05mm (e0), 0mm (e1-e3)
 - Frequency Range: 1.2-1.65 MHz
@@ -379,7 +431,7 @@ All four extruder MCUs share identical pin configurations. Each is an independen
 - Calibration Mode: 1 (frequency-based)
 - Horizontal Move Z: 100mm (parking height)
 
-**Function**: Non-contact bed distance sensing for mesh leveling and Z-offset calibration
+Non-contact bed distance sensing for mesh leveling and Z-offset calibration.
 
 #### Filament Sensor System
 
@@ -390,12 +442,14 @@ All four extruder MCUs share identical pin configurations. Each is an independen
 | PA3 | Grab Valid Detect | Analog In | Filament grab validation (0-390 range) |
 
 **Filament Motion Sensor**:
+
 - Analog Range: 0-1504
 - Detection Length: 0.5mm
 - Action: Pause on runout
 - Integration: Links to entangle detection
 
 **Park Detector Integration**:
+
 - Monitors toolhead parking position
 - Validates filament loading
 - Analog sensing for precise positioning
@@ -408,6 +462,7 @@ All four extruder MCUs share identical pin configurations. Each is an independen
 | SPI1 bus | LIS2DW SPI | SPI | SPI communication |
 
 **Accelerometer** (e0 only actively used):
+
 - Model: LIS2DW
 - Axes Mapping: Y, X, Z (remapped from physical)
 - Function: Resonance testing for input shaper calibration
@@ -415,6 +470,7 @@ All four extruder MCUs share identical pin configurations. Each is an independen
 - Frequency Range: 5-100 Hz (step: 10 Hz)
 
 **Input Shaper Settings**:
+
 - X-axis: MZV @ 54 Hz (range: 47.5-62.5 Hz)
 - Y-axis: MZV @ 47.5 Hz (range: 43-54 Hz)
 
@@ -425,6 +481,7 @@ All four extruder MCUs share identical pin configurations. Each is an independen
 | PB8 | Power Loss Detect | Digital In | Per-extruder power monitoring |
 
 **Power Loss Detection**:
+
 - Trigger Time: 2ms
 - Report Interval: 0s (immediate)
 - Type Confirmation: 2 samples
@@ -482,6 +539,7 @@ All four extruder MCUs share identical pin configurations. Each is an independen
 ### Homing Behavior
 
 **X/Y Axes**:
+
 - Sensorless homing using TMC2240 stallGuard
 - Home current reduced to 0.650A during homing
 - Normal run current: 1.2A
@@ -492,12 +550,14 @@ All four extruder MCUs share identical pin configurations. Each is an independen
 - Retract distance: 3mm between attempts
 
 **Z Axis**:
+
 - Sensorless homing using TMC2209 stallGuard
 - SGTHRS: 110 (stallGuard threshold)
 - Homing speed: 10mm/s
 - Allows negative Z (-6mm) for below-bed probing
 
 **Homing Sequence**:
+
 1. Enable X stepper, wait 1s
 2. Home Y-axis (wait 1.5s for stallGuard clear)
 3. Home X-axis (wait 2s for stallGuard clear)
@@ -518,12 +578,14 @@ All four extruder MCUs share identical pin configurations. Each is an independen
 ### Temperature Control Behavior
 
 **Heated Bed**:
+
 - Dual PID control for different temperature ranges
 - PWM cycle: 1 second (smooth heating)
 - Report delta: 1s
 - Settle delta: 1.5°C
 
 **Hotends**:
+
 - PID control with 2s smoothing
 - Automatic shutdown if temp exceeds limits by >10°C
 - Minimum extrude temperature: 170°C enforced
@@ -531,12 +593,14 @@ All four extruder MCUs share identical pin configurations. Each is an independen
 ### Power Loss Recovery
 
 **Main Board**:
+
 - Detects AC power loss within 22ms
 - Saves position every 1000 lines of G-code
 - Z-hop to 140°C temperature on power loss
 - Automatic retraction/unretraction on resume
 
 **Extruder Boards**:
+
 - Independent power monitoring per MCU
 - 2ms detection time
 - Immediate shutdown on power loss
@@ -544,11 +608,13 @@ All four extruder MCUs share identical pin configurations. Each is an independen
 ### Filament Handling
 
 **Motion Sensing**:
+
 - Detects 0.5mm of missing movement
 - Automatic pause on runout
 - Analog range: 0-1504 units
 
 **Feed System**:
+
 - Preloads 950mm of filament
 - Max 20 loading attempts
 - Coil frequency thresholds:
@@ -558,6 +624,7 @@ All four extruder MCUs share identical pin configurations. Each is an independen
 ### Multi-Extruder Coordination
 
 **Park Positions**:
+
 - E0: X=35.0, Y=332.2
 - E1: X=102.7, Y=332.2
 - E2: X=170.2, Y=332.2
@@ -566,6 +633,7 @@ All four extruder MCUs share identical pin configurations. Each is an independen
 **Idle Position**: Y=250 (all extruders)
 
 **Tool Change Behavior**:
+
 - Fast move speed: 400mm/s
 - Slow move speed: 50mm/s
 - Grab speed: 10mm/s
